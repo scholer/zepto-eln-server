@@ -2,3 +2,5 @@ flask
 pyyaml
 requests
 jinja2
+click
+python-dotenv

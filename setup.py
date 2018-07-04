@@ -1,8 +1,5 @@
-# from distutils.core import setup
-from setuptools import find_packages, setup
 
-
-long_description = """
+"""
 
 Zepto ELN server: Flat-file Markdown-based wiki-style electronic laboratory notebook and journal.
 
@@ -12,17 +9,23 @@ For local and online journal presentation.
 
 """
 
+# from distutils.core import setup
+from setuptools import find_packages, setup
+
+
 # To update entry points, just bump verison number and do `$ pip install -e .`
 
 # update 'version' and 'download_url', as well as qpaint_analysis.__init__.__version__
 setup(
     name='zepto-eln-server',  # old names: eln-md-pico-server
     description='Zepto ELN server: Flat-file Markdown-based wiki-style electronic laboratory notebook and journal.',
-    long_description=long_description,
+    long_description=__doc__,
     # long_description=open('README.txt').read(),
-    version='0.0.1dev',  # Update for each new version
-    # packages=find_packages(),  # List all packages (directories) to include in the source dist.
-    packages=['zepto_eln.eln_server', 'zepto_eln.eln_utils'],  # List manually (distributions with namespace package)
+    version='0.0.2dev0',  # Update for each new version
+    packages=find_packages(),  # List all packages (directories) to include in the source dist.
+    # packages=[  # Manual listing is required for namespace distribution packages:
+    #     'zepto_eln.eln_server', 'zepto_eln.md_utils', 'zepto_eln.eln_cli'
+    # ],
     url='https://github.com/scholer/zepto-eln-server',
     # download_url='https://github.com/scholer/rsenv/tarball/0.1.0',
     download_url='https://github.com/scholer/zepto-eln-server/archive/master.zip',  # Update for each new version
@@ -30,8 +33,6 @@ setup(
     author_email='rasmusscholer@gmail.com',
     license='GNU Affero General Public License v3',
     keywords=[
-        #"GEL", "Image", "Annotation", "PAGE", "Agarose", "Protein",
-        #"SDS", "Gel electrophoresis", "Typhoon", "GelDoc",
         "ELN", "Journal", "Research", "wiki", "web app",
         "Molecular biology", "Biotechnology", "Bioinformatics",
         "DNA", "DNA sequences", "sequence manipulation",
@@ -47,6 +48,7 @@ setup(
         'console_scripts': [
             # console_scripts should all be lower-case, else you may get an error when uninstalling:
             # 'rsenv=rsenv.rsenv_cli:rsenv_cli',
+            # 'zepto-eln:zepto_eln.eln_server.eln_server_app:cli',
         ],
     },
 
@@ -57,6 +59,7 @@ setup(
         'markdown',
         # 'requests',
         'click',     # Easy creation of command line interfaces (CLI).
+        'python-dotenv',
     ],
     classifiers=[
         # How mature is this project? Common values are

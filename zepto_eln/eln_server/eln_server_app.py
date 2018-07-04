@@ -8,8 +8,9 @@ r"""
 # On Windows we use `set` instead of `export`:
 set FLASK_ENV=development
 set FLASK_APP=eln_server_app.py
-set ELN_SERVER_DOCUMENTS_ROOT="C:\Users\rasse\Dropbox\_experiment_data"
-set ELN_SERVER_DOCUMENTS_ROOT="D:/Dropbox/_experiment_data/"
+set ZEPTO_ELN_DOCUMENT_ROOT="C:\Users\rasse\Dropbox\_experiment_data"
+set ZEPTO_ELN_DOCUMENT_ROOT="D:/Dropbox/_experiment_data/"
+set ZEPTO_ELN_DOCUMENT_ROOT=D:/Dropbox/_experiment_data
 flask run
 
 You can also use a `wsgi.py` file to configure Flask.
@@ -64,9 +65,10 @@ def serve_file(path, serve_html_file_if_newer=True, update_html_file=True):
         or otherwise create a non-string response.
     """
     try:
-        document_root = os.environ['ELN_SERVER_DOCUMENTS_ROOT']
+        document_root = os.environ['ZEPTO_ELN_DOCUMENT_ROOT']
     except KeyError:
         document_root = r"D:/Dropbox/_experiment_data/"
+        print("ZEPTO_ELN_DOCUMENT_ROOT environment variable not set; using default:", document_root)
     print("document_root:", document_root)
     fs_path = os.path.join(document_root, path)
 
@@ -116,9 +118,13 @@ def serve_file(path, serve_html_file_if_newer=True, update_html_file=True):
     return f'<p>SOMETHING WENT WRONG!</p><p>{path}</p><p>{fs_path}</p><p>'
 
 
-if __name__ == '__main__':
+def cli():
     # This works for simple, local usage, but is not recommended for production development,
     # since a lot of things are not equivalent to running the app with an application server.
     # It also doesn't work well for development because reloads may not work properly.
     # In conclusion: Just use the `flask` program (or application server) to run the flask app.
     app.run(host='0.0.0.0', port=8000)
+
+
+if __name__ == '__main__':
+    cli()
