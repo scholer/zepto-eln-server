@@ -2,76 +2,7 @@
 
 """
 
-
-
-
-Templating systems:
--------------------
-
-Overview:
-* Jinja2 (Python) - by the Pocoo team (Flask, Sphinx, Pygments).
-* Django template system (on which Jinja was modelled). Uses `{{` tags and `{%` blocks. Python.
-* Twig (PHP) - uses a similar syntax to Django/Jinja, using `{{` tags and `{%` blocks.
-    By Fabien Potencier (Symfony author) and Armin Ronacher (Jinja author).
-* Liquid (Ruby) - Another Django-inspired templating language. For Ruby.
-* Mustache - Also uses {{ curly }} braced syntax, but "Logic-less templating language".
-* Handlebars - extension of Mustache, originally JS.
-* Nunjucks - JS, similar to Jinja2.
-* Velocity - Java originating templating engine. Apache project.
-* Mako - Another popular Python templating language, using `<%` tags and `%` blocks.
-* Cheetah - Uses '#' line prefix and '$' variables, like Velocity. Very similar to writing Python code.
-* Genshi
-* Hiccup, Sneeze
-* Template Attribute Language (TAL)
-* HAML, JADE, Pug - Alternative "languages" to write the DOM.
-* Python-based templating: %s interpolation, {} formatting, and $ templating.
-*
-
-Note: Pico has two ways of injecting variables:
-    1. Pico variables, where %metadata_variables% are replaced, at the Markdown level.
-    2. Twig variables, which operates at the HTML level.
-        {{html_content}} is the variables that inserts the markdown-converted html into the page body.
-
-Typical extensions:
-* *.jinja2 (or just *.j2), *.twig, etc.
-* Can be single, *.jinja2, or *.html.jinja2 - similar to *.tar.gz.
-*
-
-
-Refs:
-* http://vschart.com/list/template-language/
-* http://jinja.pocoo.org/docs/2.10/switching/
-* https://en.wikipedia.org/wiki/Comparison_of_web_template_engines
-* https://www.quora.com/Was-Twigs-syntax-inspired-by-Liquid
-
-
-Jinja templating:
------------------
-
-Refs:
-* http://flask.pocoo.org/docs/1.0/quickstart/#rendering-templates
-* http://flask.pocoo.org/docs/1.0/tutorial/templates/
-* http://flask.pocoo.org/docs/1.0/templating/
-
-
-Flask templating (uses Jinja):
--------------------------------
-
-
-Q: How to change the template directory?
-* A: Just pass `template_folder` when instantiating your Flask app: `Flask(__name__, template_folder="wherever")`
-
-Q: How to change template directory dynamically?
-* https://stackoverflow.com/questions/13598363/how-to-dynamically-select-template-directory-to-be-used-in-flask
-* You can overwrite the `app.jinja_loader`, and use a `jinja2.ChoiceLoader` object:
-```
-app.jinja_loader = jinja2.ChoiceLoader([
-        app.jinja_loader,
-        jinja2.FileSystemLoader(['/flaskapp/userdata',
-                                 '/flaskapp/templates']),
-    ])
-```
-
+See notes/templating.md
 
 
 """
@@ -85,6 +16,7 @@ from pprint import pprint
 
 def apply_template_file_to_document(
         document, template_type='jinja2', template=None, template_dir=None, default_template_name='index',
+        template_vars=None,
 ):
     """ Locate the proper template file to use and apply it to the document.
 
@@ -102,6 +34,8 @@ def apply_template_file_to_document(
 
 
     """
+    if template_vars is None:
+        template_vars = {}
     print("\nApplying template file to document...")
     print(" - template_dir:", template_dir)
 
@@ -116,7 +50,8 @@ def apply_template_file_to_document(
         print(f"Locating template {template!r} in template_dir {template_dir!r}.")
         assert template_dir is not None
         assert os.path.isdir(template_dir)
-        template_selection = get_templates_in_dir(template_dir, glob_patterns=("*.html", "*.j2.html", "*.j2", "*.twig"))
+        template_selection = get_templates_in_dir(template_dir, glob_patterns=("*.jinja",))
+        # glob_patterns=("*.html", "*.j2.html", "*.j2", "*.twig"))
         try:
             template = template_selection[template_name]
         except KeyError:
@@ -126,8 +61,8 @@ def apply_template_file_to_document(
             print(f"Using template {template_name!r} from template directory {template_dir!r}.", file=sys.stderr)
 
     print("Applying template:", template)
-
-    html = apply_template(template=pathlib.Path(template), template_type=template_type, template_vars=document)
+    template_vars.update(document)
+    html = apply_template(template=pathlib.Path(template), template_type=template_type, template_vars=template_vars)
     document['html'] = html
     return html
 
@@ -164,7 +99,7 @@ def apply_template(template, template_vars, template_type='jinja2'):
     return html
 
 
-def get_templates_in_dir(template_dir, glob_patterns=('*.twig',)):
+def get_templates_in_dir(template_dir, glob_patterns=('*.jinja',)):
 
     files = [fn for pat in glob_patterns for fn in sorted(glob.iglob(os.path.join(template_dir, pat)))]
     print(f"\nTemplate files in {template_dir!r}:", file=sys.stderr)

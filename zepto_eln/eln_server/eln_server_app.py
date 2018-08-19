@@ -19,6 +19,7 @@ You can also use a `wsgi.py` file to configure Flask.
 
 import os
 import sys
+from pprint import pprint
 
 from flask import Flask, request, send_file, send_from_directory, redirect, url_for, abort, config
 
@@ -44,6 +45,8 @@ try:
 except RuntimeError:
     pass
 
+"""hej"""
+
 
 @app.route('/')
 def index():
@@ -64,6 +67,7 @@ def serve_file(path, serve_html_file_if_newer=True, update_html_file=True):
         If you don't want to embed the content inside a HTML document, you need to return a custom request
         or otherwise create a non-string response.
     """
+    print("hej")
     try:
         document_root = os.environ['ZEPTO_ELN_DOCUMENT_ROOT']
     except KeyError:
@@ -93,12 +97,29 @@ def serve_file(path, serve_html_file_if_newer=True, update_html_file=True):
             html_file = fs_path+'.html'
             return open(html_file).read()
         else:
+            # Generate page tree:
+            from zepto_eln.eln_server.path_utils import get_page_tree_recursive
+            # not just pages, also folders. Maybe "navigation tree" or "sitemap" ?
+            navigation_tree = get_page_tree_recursive(
+                document_root, rel_root=document_root, depth=4, include_files=["*.md"], include_dirs=["2018*"],
+            )
+            # We just get a dict for the top/root element, but we actually just want the children:
+            navigation_tree = navigation_tree['children']  # or [navigation_tree] if you want a collapsible root
+            print("navigation_tree:")
+            pprint(navigation_tree)
+            template_vars = {
+                'navigation_tree': navigation_tree,
+                'request_path': '/' + path,
+                'documents_root_url': '/',  # aka `base_url` in e.g. pico?
+            }
             # Compile markdown document:
             print("Compiling Markdown file:", fs_path+'.md')
+            # TODO: Do templating using Flasks Jinja system, which adds nice variables, e.g. request.url.
             document = compile_markdown_document(
                 path=fs_path+'.md',
                 outputfn='{filepath_noext}.html' if update_html_file else False,
                 template_dir=TEMPLATE_DIR,
+                template_vars=template_vars,
             )
             print(f"Serving {fs_path} as compiled HTML ({len(document['html'])} characters)")
             return document['html']

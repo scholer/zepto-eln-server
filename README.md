@@ -196,9 +196,10 @@ Static website generators work by generating/compiling HTML files locally,
 * [Hugo](https://gohugo.io/) - Popular and active static site generator, written in Go.
 * Gatsby 
 * NUXT
-* MkDocs - created as an alternative to Sphinx for compiling Python documentation documents,
-    MkDocs. Written in Python (of course).
-* Pelican
+* MkDocs - created as an alternative to Sphinx for compiling Python documentation documents. 
+    Written in Python (of course).
+* [Pelican](https://github.com/getpelican/pelican) - Markdown and reST documents with Jinja templating. 
+    Written in Python.
 * MetalSmith
 * Middleman
 * Spike
@@ -282,7 +283,7 @@ it is important to be able to revert changes that aren't good.
 Hence, almost all wiki software provides a built-in way to keep track of changes and 
 compare different versions of a page.
 
-Again, the "flat-file" moniker refers to how documents are stored 
+Again, the "flat-file" moniker refers to how documents are stored.
 
 
 
@@ -323,6 +324,8 @@ Again, the "flat-file" moniker refers to how documents are stored
 ### Other interesting projects;
 
 * [Intelligent Document Environment](https://github.com/documize/community).
+
+
 
 
 

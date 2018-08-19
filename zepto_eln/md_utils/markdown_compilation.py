@@ -103,8 +103,9 @@ def compile_markdown_document(
         parser='python-markdown', extensions=None,
         do_pico_substitution=True, do_apply_template=True,
         template_type='jinja2', template=None, template_dir=None, default_template_name='index',
+        template_vars=None,
 ):
-    """ Compile a single markdown file and return the compiled HTML, optionally saving the HTML output to a file.
+    """ Compile a single markdown file and apply template, return compiled HTML, optionally save HTML output to a file.
 
     Args:
         path: Filepath to the markdown file.
@@ -145,7 +146,7 @@ def compile_markdown_document(
         # apply_template_file_to_document updates document['html']
         html = apply_template_file_to_document(
             document, template_type=template_type, template=template, template_dir=template_dir,
-            default_template_name=default_template_name)
+            default_template_name=default_template_name, template_vars=template_vars)
     else:
         html = document['html'] = html_content
 
