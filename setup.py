@@ -21,7 +21,7 @@ setup(
     description='Zepto ELN server: Flat-file Markdown-based wiki-style electronic laboratory notebook and journal.',
     long_description=__doc__,
     # long_description=open('README.txt').read(),
-    version='0.0.2dev0',  # Update for each new version
+    version='0.1.0dev1',  # Update for each new version
     packages=find_packages(),  # List all packages (directories) to include in the source dist.
     # packages=[  # Manual listing is required for namespace distribution packages:
     #     'zepto_eln.eln_server', 'zepto_eln.md_utils', 'zepto_eln.eln_cli'
@@ -48,7 +48,15 @@ setup(
         'console_scripts': [
             # console_scripts should all be lower-case, else you may get an error when uninstalling:
             # 'rsenv=rsenv.rsenv_cli:rsenv_cli',
-            # 'zepto-eln:zepto_eln.eln_server.eln_server_app:cli',
+            # 'zepto-eln-server:zepto_eln.eln_server.eln_server_app:cli',
+            # Edit: Use the flask runner to run the server app:
+            #   $ activate <environment>
+            #   $ set FLASK_APP=zepto_eln.eln_server.eln_server_app
+            #   $ flask run
+            # TODO: Create CLI for getting help, or just repurpose zepto-eln-server (and maybe a `man zepto` entry?).
+            # TODO: Use
+            # TODO:     app.config.from_object('zepto_eln.eln_server.default_settings')
+            # TODO:     app.config.from_envvar('ZEPTO_ELN_SERVER_SETTINGS')
         ],
     },
 

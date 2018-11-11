@@ -38,6 +38,7 @@ Python-Markdown extensions: https://python-markdown.github.io/extensions/
 import sys
 import requests
 import markdown
+import pdb
 
 from .document_io import load_document
 from .pico_utils import substitute_pico_variables
@@ -130,8 +131,13 @@ def compile_markdown_document(
     """
     document = load_document(path)  # dict with 'content', 'meta', 'filename', etc.
 
+    if not document['content']:
+        print("ERROR: document['content'] is %r; this shouldn't happen!" % (document['content'],), file=sys.stderr)
+        pdb.set_trace()
+
     if do_pico_substitution:
         # Perform %pico_variable% substitution:
+        print("Performing %pico_variable% substitution...", file=sys.stderr)
         pico_vars = document.copy()
         pico_vars.update(document['fileinfo'])  # has 'dirname', 'basename', etc.
         document['content'] = substitute_pico_variables(document['content'], template_vars=pico_vars, errors='print')
@@ -140,7 +146,14 @@ def compile_markdown_document(
     document['html_content_raw'] = html_content
     document['html_content'] = html_content
     document['html_body'] = html_content
-    document['content'] = html_content
+    # document['content'] = html_content  # Should we overwrite the original markdown content?
+
+    if document['meta'].get('yfm_err_msg'):
+        document['meta']['yfm_err_msg_html'] = compile_markdown_to_html(
+            document['meta']['yfm_err_msg'], parser=parser, extensions=extensions)
+    if document['meta'].get('yfm_err_detail'):
+        document['meta']['yfm_err_detail_html'] = compile_markdown_to_html(
+            document['meta']['yfm_err_detail'], parser=parser, extensions=extensions)
 
     if do_apply_template:
         # apply_template_file_to_document updates document['html']

@@ -1,0 +1,4 @@
+pyreadline
+fancycompleter
+wmctrl
+pdbpp

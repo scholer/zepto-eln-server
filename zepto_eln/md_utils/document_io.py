@@ -11,6 +11,7 @@ Module for loading markdown documents, including parsing of optional YAML frontm
 
 
 import os
+import sys
 import glob
 import yaml
 import yaml.scanner
@@ -65,15 +66,28 @@ def load_document(filepath, add_fileinfo_to_meta=True, warn_yaml_scanner_error=N
 
     with open(filepath, 'r', encoding='utf-8') as fd:
         raw_content = fd.read()
-    try:
-        yfm, md_content = parse_yfm(raw_content)
-    except yaml.scanner.ScannerError as exc:
+    # try:
+    #     yfm, md_content = parse_yfm(raw_content)
+    # except yaml.scanner.ScannerError as exc:
+    #     if warn_yaml_scanner_error:
+    #         if warn_yaml_scanner_error == 'raise':
+    #             raise exc
+    #         print(f"WARNING: YAML ScannerError while parsing YFM of file {filepath}.", file=sys.stderr)
+    #     yfm, md_content = None, raw_content
+
+    yfm, md_content, err = parse_yfm(raw_content)
+    if yfm is None:
+        yfm = {}
+    yfm['yfm_err'] = err
+    if err:
         if warn_yaml_scanner_error:
             if warn_yaml_scanner_error == 'raise':
-                raise exc
-            print(f"WARNING: YAML ScannerError while parsing YFM of file {filepath}.")
-        yfm = None
-        md_content = None
+                raise err
+        yfm['yfm_err_msg'] = err.get_err_msg()
+        yfm['yfm_err_detail'] = err.get_err_detail()
+    else:
+        yfm['yfm_err_msg'] = None
+        yfm['yfm_err_detail'] = None
 
     if add_fileinfo_to_meta and yfm is not None:
         yfm.update(fileinfo)
@@ -85,6 +99,7 @@ def load_document(filepath, add_fileinfo_to_meta=True, warn_yaml_scanner_error=N
         # 'md_content': md_content,
         'content': md_content,
         'meta': yfm,
+        # 'fm_errors': {}
         # 'meta' or 'metadata'? (Not 'yfm' - I want to be format agnostic)
         # I think I used 'meta' because that's the variablename used by Pico, e.g. '%meta.author%
     }

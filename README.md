@@ -83,10 +83,11 @@ Prepare and configure the Zepto ELN flask web app (use `export` instead of `set`
 set FLASK_ENV=development
 set ZEPTO_ELN_DOCUMENT_ROOT=D:/path/to/your/documents
 set ZEPTO_ELN_TEMPLATE_DIR=D:/path/to/your/documents/templates
+set ZEPTO_ELN_SERVER_SETTINGS=/path/to/settings.cfg
 ```
 
-Then run the Zepto ELN web app
-(make sure you are still in the `zepto-eln` environment):
+Then run the Zepto ELN web app (make sure you are still in the `zepto-eln` environment):
+
 ```cmd
 set FLASK_APP=zepto_eln.eln_server.eln_server_app
 flask run

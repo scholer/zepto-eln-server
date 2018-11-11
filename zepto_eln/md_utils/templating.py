@@ -56,12 +56,13 @@ def apply_template_file_to_document(
             template = template_selection[template_name]
         except KeyError:
             raise FileNotFoundError(
-                f"WARNING: Template_dir does not contain any templates matching{template_name!r} (case sensitive).")
+                f"WARNING: Template_dir does not contain any templates matching {template_name!r} (case sensitive).")
         else:
             print(f"Using template {template_name!r} from template directory {template_dir!r}.", file=sys.stderr)
 
     print("Applying template:", template)
     template_vars.update(document)
+    template_vars['content'] = document['html_content']  # Default document "content" entry is the Markdown.
     html = apply_template(template=pathlib.Path(template), template_type=template_type, template_vars=template_vars)
     document['html'] = html
     return html
