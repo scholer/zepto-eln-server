@@ -107,3 +107,12 @@ venv.bak/
 
 # PyCharm
 .idea/
+
+# Ignore zip files:
+*.zip
+
+# Ignore CSS files, for now:
+templates/css/
+
+# Test files:
+test.html

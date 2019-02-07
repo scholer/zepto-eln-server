@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<!-- Twig template, based on Pico CMS default theme's index.twig 
+
+For rendering with a Pico-like environment.
+Pages, e.g. Markdown pages, have a YAML front matter section with metadata,
+which is available through the `meta` template variable, e.g. `{{ meta.author }}`.
+
+Syntax highlighting:
+* PHP-Twig.tmBundle - available through package control (registers .html.twig files).
+* jinja2-tmbundle - also available through package control (registers .html.j2 files).
+
+
+-->
+<html lang="en" class="no-js">
+<head>
+    <meta charset="utf-8" />
+
+<!--
+    <title>{% if meta.title %}{{ meta.title }} | {% endif %}{{ site_title }}</title>
+    {% if meta.description %}
+        <meta name="description" content="{{ meta.description|striptags }}">
+    {% endif %}{% if meta.robots %}
+        <meta name="robots" content="{{ meta.robots }}">
+    {% endif %}
+-->
+<!--
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" type="text/css" />
+    <link rel="stylesheet" href="{{ theme_url }}/style.css" type="text/css" />
+    <link rel="stylesheet" href="{{ theme_url }}/fontello.css" type="text/css" />
+
+    script src="{{ theme_url }}/scripts/modernizr-2.6.1.min.js"></script>  
+    -->
+
+    <style>
+    img {
+        max-width: 100%;
+    }
+    </style>
+
+</head>
+<body>
+
+    <!-- Header with breadcrumbs, etc. -->
+{# The |link filter is a custom Pico filter that produces absolute URLs using Pico.getPageUrl() 
+
+    <header id="header">
+        <div class="inner clearfix">
+            <h1><a href="{{ "index"|link }}" id="logo">{{ site_title }}</a></h1>
+            <nav>
+                <ul>
+                    {% for page in pages if page.title %}
+                        <li{% if page.id == current_page.id %} class="active"{% endif %}>
+                            <a href="{{ page.url }}">{{ page.title }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+#}
+
+    <h1>{{ meta.title }}</h1>
+    <section id="info">
+        <!-- Good info panel colors: CORNSILK, LIGHTYELLOW, lavender, LIGHTSTEELBLUE, LIGHTBLUE, snow, ALICEBLUE, whitesmoke, ghostwhite, GAINSBORO, #D5DBDB,  -->
+        <div class="inner" style="background-color: lavender">
+            <h2>Project info:</h2>
+            <ul>
+                <li>Project identifier: {{ meta.projectid }}</li>
+                <li>Title description: {{ meta.titledesc }}</li>
+                <li>Page authors / experiment collaborators: {{ meta.authors }} / {{ meta.collaborators }}</li>
+                <li>Status: {{ meta.status }}</li>
+                <li>Startdate–enddate: {{ meta.startdate }}–{{ meta.enddate }}</li>
+                <li>Related ExpIDs: {{ meta.related_expids }}</li>
+                <li>Related pages : {{ meta.related_pages }}</li>
+                <li><strong>Motivation:</strong> <em>{{ meta.motivation }}</em></li>
+                <li><strong>Goal:</strong> <em>{{ meta.goal }}</em></li>
+                <li><strong>Hypothesis:</strong> <em>{{ meta.hypothesis }}</em></li>
+                <li><strong>Outline:</strong> <em>{{ meta.outline }}</em></li>
+                <li><strong>Result:</strong> {{ meta.result }}</li>
+                <li><strong>Outlook:</strong> {{ meta.outlook }}</li>
+                <li><strong>Comments:</strong> <em>{{ meta.comments }}</em></li>
+            </ul>
+            <p>Summary image:</p>
+            {# I prefer all my tags properly closed, even void-tags. #}
+            {% if meta.summary_image %}
+            <img src="{{ meta.summary_image }}" alt="Summary image" title="{{ meta.result }}" style="max-width: 200px; max-height: 200px;"/> 
+            {% endif %}
+        </div>
+    </section>
+
+    <section id="content">
+        <div class="inner">
+            {{ content }}
+        </div>
+    </section>
+
+<!--
+    <footer id="footer">
+        <div class="inner">
+            <div class="social">
+                {% for social in meta.social %}
+                    <a href="{{ social.url }}" title="{{ social.title }}"><span class="icon-{{ social.icon }}"></span></a>
+                {% endfor %}
+            </div>
+            <a href="http://picocms.org/">Pico</a> was made by <a href="http://gilbert.pellegrom.me">Gilbert Pellegrom</a>
+            and is maintained by <a href="https://github.com/picocms/Pico/graphs/contributors">The Pico Community</a>.
+            Released under the <a href="https://github.com/picocms/Pico/blob/master/LICENSE.md">MIT license</a>.
+        </div>
+    </footer>
+-->
+</body>
+</html>
