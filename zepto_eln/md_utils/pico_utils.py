@@ -6,6 +6,7 @@ Module for dealing with `Pico` markdown stuff, mostly just %variable% substituti
 
 """
 
+import sys
 import re
 from collections import defaultdict
 
@@ -71,6 +72,7 @@ def substitute_pico_variables(content, template_vars, errors='pass', varfmt="{su
         # Note: We probably shouldn't do replacements inside comments, but whatever.
         varname = placeholder.strip('%')
         try:
+            print(f" - Trying to replace varname {varname!r}", file=sys.stderr)
             sub = get_attrs_string_value(template_vars, varname)
         except KeyError as exc:
             # E.g. if you have a comment explaining %meta.variable%:
