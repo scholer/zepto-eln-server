@@ -18,11 +18,9 @@ You can also use a `wsgi.py` file to configure Flask.
 """
 
 import os
-import sys
 from pprint import pprint
 
-from flask import Flask, request, send_file, send_from_directory, redirect, url_for, abort, config
-
+from flask import Flask, send_from_directory, redirect, abort
 
 from .path_utils import expand_abbreviated_path
 from zepto_eln.md_utils.markdown_compilation import compile_markdown_document
@@ -45,12 +43,17 @@ try:
 except RuntimeError:
     pass
 
-"""hej"""
+homepage_txt = """
+HOME PAGE
+<br/><br/>
+#TODO: Still need to provide a usable front-page (incl. template). 
 
+(You can browse to an individual markdown file to see the pagetree.)
+"""
 
 @app.route('/')
 def index():
-    return 'HOME PAGE'
+    return homepage_txt
 
 
 @app.route('/<path:path>')  # path: is a type specifier, allowing the rest to contain slashes.

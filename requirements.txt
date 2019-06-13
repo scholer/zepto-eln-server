@@ -3,4 +3,6 @@ pyyaml
 requests
 jinja2
 click
+# Using .env files makes it easier to run Flask apps.
+# See http://flask.pocoo.org/docs/1.0/cli/
 python-dotenv

@@ -117,7 +117,6 @@ For more info on running and configuring Flask apps, see:
     and view your Markdown documents.
     
 
-What is nice about 
 
 
 

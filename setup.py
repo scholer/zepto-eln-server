@@ -14,18 +14,20 @@ from setuptools import find_packages, setup
 
 
 # To update entry points, just bump verison number and do `$ pip install -e .`
-
-# update 'version' and 'download_url', as well as qpaint_analysis.__init__.__version__
+# Update 'version' for each new release.
+# OBS: ZeptoELN is distributed as namespace packages.
+# This means that the top-level "zepto_eln" cannot contain any `__init__.py`
+# file in ANY of the projects that use the zepto_eln namespace.
+# See https://packaging.python.org/guides/packaging-namespace-packages/#native-namespace-packages
+# Example: https://github.com/pypa/sample-namespace-packages
 setup(
     name='zepto-eln-server',  # old names: eln-md-pico-server
     description='Zepto ELN server: Flat-file Markdown-based wiki-style electronic laboratory notebook and journal.',
     long_description=__doc__,
     # long_description=open('README.txt').read(),
-    version='0.0.2dev0',  # Update for each new version
-    packages=find_packages(),  # List all packages (directories) to include in the source dist.
-    # packages=[  # Manual listing is required for namespace distribution packages:
-    #     'zepto_eln.eln_server', 'zepto_eln.md_utils', 'zepto_eln.eln_cli'
-    # ],
+    version='0.0.4',  # Update for each new version
+    # Since we are using namespace distributions, we must manually list all sub-packages to include in the dist.
+    packages=['zepto_eln.eln_server'],
     url='https://github.com/scholer/zepto-eln-server',
     # download_url='https://github.com/scholer/rsenv/tarball/0.1.0',
     download_url='https://github.com/scholer/zepto-eln-server/archive/master.zip',  # Update for each new version
@@ -57,9 +59,8 @@ setup(
         'jinja2',
         'pyyaml',
         'markdown',
-        # 'requests',
         'click',     # Easy creation of command line interfaces (CLI).
-        'python-dotenv',
+        # 'python-dotenv',  # Allows you to use .env files to set up environment, e.g. for running Flask apps.
     ],
     classifiers=[
         # How mature is this project? Common values are
@@ -91,6 +92,8 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
 
         'Operating System :: MacOS',
         'Operating System :: Microsoft',
