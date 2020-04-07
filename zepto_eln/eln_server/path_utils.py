@@ -42,51 +42,70 @@ def longest_common_startstr(sa, sb):
     return ''.join(_iter())
 
 
-def find_index_file_for_dir(dirpath, ext='.md', strip_ext=True, indexfn='index.md', sep='/'):
+def find_index_file_for_dir(dirpath, ext='.md', strip_ext=True, indexfn='index.md', sep='/', minscore=1):
     """ For a given directory, try to find a default index file.
     This is either `index.md`, or the file with the longest overlap with the parent directory's name.
 
     Args:
-        dirpath:
-        ext:
-        strip_ext:
-        indexfn:
+        dirpath: The directory in which to look for an index file.
+        ext: Only find index files that ends with this extension.
+        strip_ext: Whether to remove the extension from the returned index file.
+        indexfn: A filename, e.g., 'index.md', that always takes precedence over other files.
+        minscore: Index files must have a common prefix with dirpath longer than this to be returned.
 
     Returns:
-
+        path (str) consisting of index filename appended to dirpath.
     """
+    # Make sure to normalize the path to avoid weird issues between "dirpath/" and "dirpath".
+    dirpath = os.path.normpath(dirpath)
     # files = [fp for fp in [os.path.join(dirpath, fn) for fn in os.listdir(dirpath)] if os.path.isfile(fp)]
     files = [fn for fn in os.listdir(dirpath) if os.path.isfile(os.path.join(dirpath, fn))]
+    pardirname = os.path.basename(dirpath)
+    print("find_index_file_for_dir() dirpath =", dirpath)
+    print("find_index_file_for_dir() pardirname =", pardirname)
+    print("find_index_file_for_dir() files =", files)
     # filter by the correct extension:
     if ext:
         files = [fn for fn in files if fn.endswith(ext)]
+        print(f"find_index_file_for_dir() files ending with {ext!r}:", files)
     if len(files) == 0:
-        raise RuntimeError("Could not find any index files for directory: " + dirpath)
+        raise RuntimeError(f"Could not find any index files for directory {dirpath!r}. (Empty filelist)")
 
     if indexfn in files:
+        print(f"find_index_file_for_dir() found filename matching {indexfn!r} - using this.")
         found_fn = indexfn
     else:
-        pardirname = os.path.basename(dirpath)
-        exact_matches = [fn for fn in files if os.path.split(fn)[0] == pardirname]
+        print(f"find_index_file_for_dir() matching pardirname = {pardirname!r} against filenames:")
+        print([os.path.splitext(fn)[0] for fn in files])
+        exact_matches = [fn for fn in files if os.path.splitext(fn)[0] == pardirname]
         if exact_matches:
             assert len(exact_matches) == 1
-            return exact_matches[0]
-        # sort by overlap first, then filename:
-        files_scored = sorted(
-            [(len(longest_common_startstr(os.path.splitext(fn)[0], pardirname)), fn) for fn in files], reverse=True)
-        # matching_files = [fn for score, fn in files_scored if score > 0]  # has best match first
-        best_score, longest_match = files_scored[0]
-        if best_score > 0:
-            found_fn = longest_match  # use longest, i.e. the file that has the most in common with the parent dirname.
+            found_fn = exact_matches[0]
+            print(f"find_index_file_for_dir() found filename matching {indexfn!r} - using this.")
         else:
-            raise RuntimeError("Could not find any index files for directory: " + dirpath)
+            print(f"find_index_file_for_dir() finding files with longest start overlap against {pardirname!r} ...")
+            files_scored = [(longest_common_startstr(os.path.splitext(fn)[0], pardirname), fn) for fn in files]
+            files_scored = [(len(shared_prefix), len(shared_prefix)/len(fn), fn) for shared_prefix, fn in files_scored]
+            # sort by overlap first, then shared-prefix to filename ratio, then filename:
+            files_scored = sorted(files_scored, reverse=True)
+            # matching_files = [fn for score, fn in files_scored if score > 0]  # has best match first
+            print(files_scored)
+            shared_prefix_len, spl_ratio, best_match = files_scored[0]
+            if minscore <= shared_prefix_len:
+                print(f"find_index_file_for_dir() found best match: '{best_match}' ({shared_prefix_len}, {spl_ratio}")
+                found_fn = best_match  # use longest, i.e. the file that has the most in common with the parent dirname.
+            else:
+                raise RuntimeError(f"Could not find any index files for directory '{dirpath}'. "
+                                   f"(shared_prefix_len = {shared_prefix_len} < minscore = {minscore})")
     if strip_ext:
+        print(f"Removing extension {ext!r} from filename {found_fn!r} ...")
         found_fn = found_fn.rsplit(ext, 1)[0]
+        print(f" - filename: {found_fn!r}")
 
     return sep.join([dirpath, found_fn])
 
 
-def find_path_expansion(abbrev, rel=None, pathsep='/'):
+def find_path_expansion(abbrev, rel=None, pathsep='/', include_ext='.md', strip_ext=False):
     """ Find path expansion for a single path abbreviation.
     If rel is none, will expand the last path part of `abbrev`.
 
@@ -126,11 +145,16 @@ def find_path_expansion(abbrev, rel=None, pathsep='/'):
     print("\n".join(cand_paths))
     if cand_paths:
         # cands now has the rel dirpath prefix:
-        md_files = [cand for cand in cand_paths if cand.endswith('.md') and os.path.isfile(cand)]
-        print("md_files:", md_files)
+        files = [cand for cand in cand_paths if os.path.isfile(cand)]
+        if include_ext:
+            files = [cand for cand in cand_paths if cand.endswith(include_ext)]
+        print("files:", files)
         # Return the shortest file or directory that starts with the abbreviated abbrev part:
-        if md_files:
-            return md_files[0]
+        if files:
+            best_guess = files[0]
+            if strip_ext:
+                best_guess = os.path.splitext(best_guess)[0]
+            return best_guess
         dirs = [cand for cand in cand_paths if os.path.isdir(cand)]
         print("dirs:", dirs)
         if dirs:
@@ -140,18 +164,20 @@ def find_path_expansion(abbrev, rel=None, pathsep='/'):
 
 def expand_abbreviated_path(
         path, root, pathsep='/',  # os.path.pathsep,
+        strip_file_ext=True,
         return_index_for_dir=True, indexfile_ext='.md', strip_indexfile_ext=True,
         return_relpath=True, ensure_forwardslash=True
 ):
     """ Expand all "abbreviated" parts of `path`, returning a "full length" path matching an actual URI.
 
     Args:
-        path:
-        root:
+        path: The abbreviated path to expand, according to actual files and directories.
+        root: Where to start searching.
         pathsep: How to join paths
-        return_index_for_dir:
+        strip_file_ext: If expanded path is a file, strip file extension if True.
+        return_index_for_dir: If the abbreviated matches a directory, try to find an index file if True.
         indexfile_ext: The extension to look for when finding index files.
-        return_relpath:
+        return_relpath: Return expanded path relative to root (if not, the path may be absolute).
         ensure_forwardslash: Convert windows backslashes to forward slashes.
 
     Returns:
@@ -200,9 +226,9 @@ def expand_abbreviated_path(
 
     """
     expanded_path = os.path.normpath(root)
-    print(f"\n\nStarting expansion of path {path!r}from {expanded_path!r}...")
+    print(f"\nStarting expansion of path {path!r} expanded_path {expanded_path!r}...")
     for part in path.split(pathsep):
-        print("expanded_path, path:", expanded_path, path)
+        print(f"expanded_path, path: {expanded_path!r}, {path!r}")
         part_path = os.path.join(expanded_path, part)
         print(" - path_part:", part_path)
         if os.path.exists(part_path):
@@ -213,7 +239,7 @@ def expand_abbreviated_path(
             # Try to find path expansion for the non-existing part:
             try:
                 print(f" - trying to find path expansion for path={part} using rel={expanded_path}.")
-                expanded_path = find_path_expansion(part, rel=expanded_path, pathsep=pathsep)
+                expanded_path = find_path_expansion(part, rel=expanded_path, pathsep=pathsep, strip_ext=strip_file_ext)
                 print(f" - SUCCESS! expanded_path is now {expanded_path!r}.")
             except RuntimeError as exc:
                 print("Could not find path expansion for path:", path)
@@ -222,7 +248,13 @@ def expand_abbreviated_path(
                 raise exc
     if os.path.isdir(expanded_path) and return_index_for_dir:
         print(f"Expanded path {expanded_path!r} is a directory; finding index file...")
-        expanded_path = find_index_file_for_dir(expanded_path, ext=indexfile_ext, strip_ext=strip_indexfile_ext)
+        try:
+            indexfile = find_index_file_for_dir(expanded_path, ext=indexfile_ext, strip_ext=strip_indexfile_ext)
+        except RuntimeError as exc:
+            print(f" - FAILED to find {indexfile_ext!r} index file for directory {expanded_path!r}: {exc}")
+            raise exc
+        print(f"Found index file: {indexfile!r}")
+        expanded_path = os.path.join(expanded_path, indexfile)
         print(f" - expanded_path with index file:", expanded_path)
     if return_relpath:
         expanded_path = os.path.relpath(expanded_path, start=root)

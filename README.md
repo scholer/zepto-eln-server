@@ -118,6 +118,17 @@ For more info on running and configuring Flask apps, see:
     
 
 
+## Configuring Zepto ELN Server:
+
+
+You have the following options for configuring Zepto ELN Server app:
+
+* Specifying environment variables in the current terminal.
+* Using a `.env` file in the current directory.
+* Using `.zepto-eln-server.yaml` config file in the current directory.
+* Using the global config file in your user home directory.
+
+
 
 
 

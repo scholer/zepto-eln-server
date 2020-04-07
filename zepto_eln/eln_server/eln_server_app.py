@@ -19,19 +19,41 @@ You can also use a `wsgi.py` file to configure Flask.
 
 import os
 from pprint import pprint
-
+import yaml
 from flask import Flask, send_from_directory, redirect, abort
 
-from .path_utils import expand_abbreviated_path
 from zepto_eln.md_utils.markdown_compilation import compile_markdown_document
+
+from .path_utils import expand_abbreviated_path
+from .path_utils import get_page_tree_recursive
 from . import default_settings
 
+# TODO: Use the flask built-in config object for all configuration-related things.
+# TODO: https://flask.palletsprojects.com/en/1.1.x/config
+try:
+    CWD_CONFIG = yaml.safe_load(open('.zepto-eln-server.yaml'))
+except FileNotFoundError:
+    CWD_CONFIG = {}
 
 TEMPLATE_DIR = os.environ.get('ZEPTO_ELN_TEMPLATE_DIR')
 if TEMPLATE_DIR:
-    TEMPLATE_DIR = TEMPLATE_DIR.strip('"')
+    TEMPLATE_DIR = TEMPLATE_DIR.strip('"')  # In case we have accidentally quoted the dir too much.
+    # TEMPLATE_DIR = os.path.abspath(TEMPLATE_DIR)  # Make it absolute?
 print("TEMPLATE_DIR:", repr(TEMPLATE_DIR))
 
+# The include_dirs patterns are matched against the full path relative to document_root.
+# E.g. "2018*" will match "2018_Aarhus/" and all sub-directories.
+# This is currently only used as a page-tree filter; doesn't restrict what files may be served.
+# Maybe rename environment variable to ZEPTO_ELN_PAGETREE_INCLUDE_DIRS ?
+PAGETREE_INCLUDE_DIRS = os.environ.get('ZEPTO_ELN_PAGETREE_INCLUDE_DIRS')
+if PAGETREE_INCLUDE_DIRS:
+    PAGETREE_INCLUDE_DIRS = PAGETREE_INCLUDE_DIRS.split(';')
+else:
+    # True = include all dirs; False or None = do not include dirs.
+    PAGETREE_INCLUDE_DIRS = CWD_CONFIG.get('pagetree_include_dirs', True)
+print("PAGETREE_INCLUDE_DIRS:", repr(PAGETREE_INCLUDE_DIRS))
+
+SERVE_CACHED_HTML_IF_NEWER = True
 
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
 app.config.update(
@@ -51,13 +73,20 @@ HOME PAGE
 (You can browse to an individual markdown file to see the pagetree.)
 """
 
+# TODO: There is a but where http://127.0.0.1:5000/2019_Aarhus returns a runtime error because no index file was found,
+# TODO: but http://127.0.0.1:5000/2019_Aarhus/ returns http://127.0.0.1:5000/2019_Aarhus/RS-Experiments-overview.md
+# It might be due to how the path is generated, @app.route('/<path:path>') - if
+
+
+
 @app.route('/')
 def index():
+    print(f"\n\nServing @app.route('/')")
     return homepage_txt
 
 
 @app.route('/<path:path>')  # path: is a type specifier, allowing the rest to contain slashes.
-def serve_file(path, serve_html_file_if_newer=True, update_html_file=True):
+def serve_file(path, serve_html_file_if_newer=SERVE_CACHED_HTML_IF_NEWER, update_html_file=True):
     """
 
     Args:
@@ -70,12 +99,13 @@ def serve_file(path, serve_html_file_if_newer=True, update_html_file=True):
         If you don't want to embed the content inside a HTML document, you need to return a custom request
         or otherwise create a non-string response.
     """
-    print("hej")
+    print(f"\n\nBEGIN serve_file() - path={path}")
     try:
         document_root = os.environ['ZEPTO_ELN_DOCUMENT_ROOT']
     except KeyError:
-        document_root = r"D:/Dropbox/_experiment_data/"
-        print("ZEPTO_ELN_DOCUMENT_ROOT environment variable not set; using default:", document_root)
+        document_root = os.getcwd()
+        print("ZEPTO_ELN_DOCUMENT_ROOT environment variable not set; using current directory:", document_root)
+    document_root = os.path.abspath(document_root)
     print("document_root:", document_root)
     fs_path = os.path.join(document_root, path)
 
@@ -93,7 +123,9 @@ def serve_file(path, serve_html_file_if_newer=True, update_html_file=True):
     if os.path.isfile(fs_path + '.md'):
         # Request for showing compiled markdown document:
         print("Requested HTML-compiled markdown document:", fs_path)
-        if (serve_html_file_if_newer and os.path.isfile(fs_path+'.html') and False
+        html_filename = fs_path+'.html'
+        print(f"Does {html_filename} exist:", os.path.isfile(fs_path+'.html'))
+        if (serve_html_file_if_newer and os.path.isfile(fs_path+'.html')
                 and os.path.getmtime(fs_path+'.html') > os.path.getmtime(fs_path+'.md')):
             print("Sending cached .html document:", fs_path+'.html')
             # return send_from_directory(document_root, fs_path+'.html')
@@ -101,10 +133,9 @@ def serve_file(path, serve_html_file_if_newer=True, update_html_file=True):
             return open(html_file).read()
         else:
             # Generate page tree:
-            from zepto_eln.eln_server.path_utils import get_page_tree_recursive
             # not just pages, also folders. Maybe "navigation tree" or "sitemap" ?
             navigation_tree = get_page_tree_recursive(
-                document_root, rel_root=document_root, depth=4, include_files=["*.md"], include_dirs=["2018*"],
+                document_root, rel_root=document_root, depth=4, include_files=["*.md"], include_dirs=PAGETREE_INCLUDE_DIRS,
             )
             # We just get a dict for the top/root element, but we actually just want the children:
             navigation_tree = navigation_tree['children']  # or [navigation_tree] if you want a collapsible root
@@ -121,25 +152,33 @@ def serve_file(path, serve_html_file_if_newer=True, update_html_file=True):
             document = compile_markdown_document(
                 path=fs_path+'.md',
                 outputfn='{filepath_noext}.html' if update_html_file else False,
+                yfm_parsing=True, yfm_errors='warn',  # Try to parse YFM, but only print warning if it fails.
                 template_dir=TEMPLATE_DIR,
                 template_vars=template_vars,
             )
-            print(f"Serving {fs_path} as compiled HTML ({len(document['html'])} characters)")
+            print(f"Serving {fs_path} as freshly-compiled HTML ({len(document['html'])} characters)")
             return document['html']
     else:
         # Try to see if we have an abbreviated path:
+        print(f" - Path {path!r} is not a file, and neither is {path+'.md'!r}.")
+        print(f" - Checking if path {path!r} is an abbreviated path...")
         try:
-            print(f"Checking if path {path!r} is an abbreviated path...")
+            # Should we do this relatively to the current path-dir, or absolute versus document_root?
             expanded_path = expand_abbreviated_path(
-                path, root=document_root, return_index_for_dir=True, strip_indexfile_ext=True,
+                path, root=document_root,
+                return_index_for_dir=True, strip_indexfile_ext=True,
                 return_relpath=True, ensure_forwardslash=True)
+        except RuntimeError as exc:
+            print(f"ERROR, {path!r} could not be expanded: {exc}")
+            return abort(404, description=str(exc))
+        else:
+            expanded_path = '/' + expanded_path  # Make the redirect absolute (i.e. relative to document_root).
             print(f" - path abbreviation expansion found, redirecting to:", expanded_path)
             return redirect(expanded_path)
-        except RuntimeError as exc:
-            print(f"ERROR, {path!r} could not be expanded:", repr(exc))
-            return abort(404)  # , message=repr(exc))
+
 
     return f'<p>SOMETHING WENT WRONG!</p><p>{path}</p><p>{fs_path}</p><p>'
+
 
 
 def cli():
